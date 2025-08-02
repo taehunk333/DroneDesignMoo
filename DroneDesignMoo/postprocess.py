@@ -7,14 +7,14 @@ from DroneDesignMoo.constants import *
 import matplotlib
 
 def decode_discrete_vars(X):
-    nmotors_idx = np.clip(np.round(X[:, 0]).astype(int), 0, len(NMOTORS_SET) - 1)
-    Vbattery_idx = np.clip(np.round(X[:, 7]).astype(int), 0, len(VBATTERY_SET) - 1)
-    Crating_idx = np.clip(np.round(X[:, 8]).astype(int), 0, len(CRATING_SET) - 1)
+    nmotors_idx = np.clip(np.round(X[:, 0]).astype(int), 0, len(NUM_MOTORS_SET) - 1)
+    Vbattery_idx = np.clip(np.round(X[:, 7]).astype(int), 0, len(BATT_VOLT_SET) - 1)
+    Crating_idx = np.clip(np.round(X[:, 8]).astype(int), 0, len(C_RATE_SET) - 1)
 
     X_decoded = X.copy()
-    X_decoded[:, 0] = [NMOTORS_SET[i] for i in nmotors_idx]
-    X_decoded[:, 7] = [VBATTERY_SET[i] for i in Vbattery_idx]
-    X_decoded[:, 8] = [CRATING_SET[i] for i in Crating_idx]
+    X_decoded[:, 0] = [NUM_MOTORS_SET[i] for i in nmotors_idx]
+    X_decoded[:, 7] = [BATT_VOLT_SET[i] for i in Vbattery_idx]
+    X_decoded[:, 8] = [C_RATE_SET[i] for i in Crating_idx]
     return X_decoded
 
 def plot_pareto_front(F, feasible_indices, max_solutions=5):
@@ -38,32 +38,44 @@ def plot_pareto_front(F, feasible_indices, max_solutions=5):
     ax.legend(loc='best', fontsize=9)
     plt.show()
 
-def plot_decision_variables(X_best, variable_names, max_solutions=5):
-    N = min(len(X_best), max_solutions)
-    colors = matplotlib.cm.tab10.colors[:N]
+def plot_decision_variables(X_all, X_feasible, F_feasible, variable_names, max_solutions=5):
+    # Sort feasible solutions by first objective (assuming minimization, adjust sign if needed)
+    best_indices = np.argsort(F_feasible[:, 0])
+    N_best = min(len(X_feasible), max_solutions)
 
-    fig, axes = plt.subplots(N_VAR, 1, figsize=(15, N_VAR * 0.9), sharex=False)
+    X_best = X_feasible[best_indices][:N_best]
+    colors = matplotlib.cm.tab10.colors[:N_best]
+
+    fig, axes = plt.subplots(len(variable_names), 1, figsize=(15, len(variable_names) * 0.9), sharex=False)
 
     for i, ax in enumerate(axes):
         ticks = None
         if i == 0:
-            ticks = NMOTORS_SET
+            ticks = NUM_MOTORS_SET
         elif i == 7:
-            ticks = VBATTERY_SET
+            ticks = BATT_VOLT_SET
         elif i == 8:
-            ticks = CRATING_SET
+            ticks = C_RATE_SET
 
         if ticks is not None:
             ax.set_xticks(ticks)
             ax.set_xlim(min(ticks) - 1, max(ticks) + 1)
             ax.hlines(0, min(ticks) - 1, max(ticks) + 1, color='gray', linewidth=5, alpha=0.3)
-            for j in range(N):
+            # Plot all solutions in dark gray
+            for x in X_all[:, i]:
+                ax.plot(x, 0, 'o', color='darkgray', markersize=4, alpha=0.4)
+            # Highlight best solutions in color
+            for j in range(N_best):
                 x_val = X_best[j, i]
                 ax.plot(x_val, 0, 'o', color=colors[j], markersize=6)
         else:
             ax.hlines(0, XL[i], XU[i], color='gray', linewidth=5, alpha=0.3)
             ax.set_xlim(XL[i], XU[i])
-            for j in range(N):
+            # Plot all solutions in dark gray
+            for x in X_all[:, i]:
+                ax.plot(x, 0, 'o', color='darkgray', markersize=4, alpha=0.4)
+            # Highlight best solutions in color
+            for j in range(N_best):
                 x_val = X_best[j, i]
                 ax.plot(x_val, 0, 'o', color=colors[j], markersize=6)
 
@@ -75,9 +87,9 @@ def plot_decision_variables(X_best, variable_names, max_solutions=5):
         ax.spines['bottom'].set_visible(True)
         ax.tick_params(axis='x', direction='out')
 
-    handles = [plt.Line2D([0], [0], marker='o', color='w', label=f'Solution {i+1}', markerfacecolor=colors[i], markersize=6)
-               for i in range(N)]
-    fig.legend(handles=handles, loc='lower center', ncol=N, fontsize=9, frameon=False)
+    handles = [plt.Line2D([0], [0], marker='o', color='w', label=f'Solution {i+1}',
+                          markerfacecolor=colors[i], markersize=6) for i in range(N_best)]
+    fig.legend(handles=handles, loc='lower center', ncol=N_best, fontsize=9, frameon=False)
 
     plt.subplots_adjust(top=0.97, bottom=0.12, left=0.12, right=0.95, hspace=0.5)
     plt.show()

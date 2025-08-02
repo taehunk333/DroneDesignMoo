@@ -8,19 +8,19 @@ class DroneOptimizationProblem(Problem):
         super().__init__(n_var=N_VAR, n_obj=N_OBJ, n_constr=N_CONSTR, xl=XL, xu=XU)
 
     def _evaluate(self, X, out, *args, **kwargs):
-        nmotors_idx = np.clip(np.round(X[:, 0]).astype(int), 0, len(NMOTORS_SET) - 1)
-        Vbattery_idx = np.clip(np.round(X[:, 7]).astype(int), 0, len(VBATTERY_SET) - 1)
-        Crating_idx = np.clip(np.round(X[:, 8]).astype(int), 0, len(CRATING_SET) - 1)
+        nmotors_idx = np.clip(np.round(X[:, 0]).astype(int), 0, len(NUM_MOTORS_SET) - 1)
+        Vbattery_idx = np.clip(np.round(X[:, 7]).astype(int), 0, len(BATT_VOLT_SET) - 1)
+        Crating_idx = np.clip(np.round(X[:, 8]).astype(int), 0, len(C_RATE_SET) - 1)
 
-        nmotors = np.array([NMOTORS_SET[i] for i in nmotors_idx])
+        nmotors = np.array([NUM_MOTORS_SET[i] for i in nmotors_idx])
         KV_motor = X[:, 1]
         Imotor_max = X[:, 2]
         mmotor = X[:, 3]
         Dprop = X[:, 4]
         Pprop = X[:, 5]
         Cbattery = X[:, 6]
-        Vbattery = np.array([VBATTERY_SET[i] for i in Vbattery_idx])
-        Crating = np.array([CRATING_SET[i] for i in Crating_idx])
+        Vbattery = np.array([BATT_VOLT_SET[i] for i in Vbattery_idx])
+        Crating = np.array([C_RATE_SET[i] for i in Crating_idx])
         mframe = X[:, 9]
 
         mbattery = (Cbattery * Vbattery) / (ENERGY_DENSITY * 1000)
@@ -41,11 +41,11 @@ class DroneOptimizationProblem(Problem):
         F = np.column_stack([F1, F2, F3])
 
         g1 = 2 * mtotal * GRAV_CONSTANT - (nmotors * Tmotor_max)
-        g2 = TREQUIRED - tflight
+        g2 = MIN_FLIGHT_TIME - tflight
         g3 = Idraw - (Crating * Cbattery / 1000)
         g4 = Idraw_per_motor - Imotor_max
-        g5 = Vbattery - VESC_MAX
-        g6 = Dprop - DFRAME_MAX
+        g5 = Vbattery - ESC_VOLT_LIMIT
+        g6 = Dprop - FRAME_DIAM_MAX
         G = np.column_stack([g1, g2, g3, g4, g5, g6])
 
         out["F"] = F

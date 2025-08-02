@@ -2,10 +2,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Debug run.py",
+            "name": "Python: Debug main.py",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/DroneDesignMoo/run.py",
+            "program": "${workspaceFolder}/DroneDesignMoo/main.py",
             "console": "integratedTerminal"
         }
     ]
