@@ -208,19 +208,31 @@ else:
 
     plt.figure(figsize=(18, 8))
 
-    # Plot all solutions in light gray first
-    parallel_coordinates(df_norm, class_column="Solution", color=['darkgray']*len(df_norm['Solution'].unique()), alpha=0.2, linewidth=0.7)
+    # Plot all solutions first (no legend handling here)
+    parallel_coordinates(df_norm, class_column="Solution",
+                        color='darkgray', alpha=0.2, linewidth=1)
 
-    # Overlay the top 5 solutions with distinct colors
     colors = plt.cm.tab10.colors[:N]
+    handles = []
+
     for i in range(N):
         sol_label = f"Solution {i+1}"
-        parallel_coordinates(df_norm[df_norm['Solution'] == sol_label], class_column="Solution",
+        parallel_coordinates(df_norm[df_norm['Solution'] == sol_label],
+                            class_column="Solution",
                             color=[colors[i]], alpha=0.9, linewidth=2)
+        
+        # Prepare custom legend handles
+        handle = plt.Line2D([0], [0], color=colors[i], linewidth=2, label=sol_label)
+        handles.append(handle)
 
     plt.ylabel("Normalized Values (min-max scaled)", fontsize=12)
     plt.title("Parallel Coordinates Plot - All Solutions with Top 5 Highlighted")
     plt.grid(True, alpha=0.3)
     plt.xticks(rotation=90)
+
+    # Add legend manually
+    plt.legend(handles=handles, loc='best')
+
     plt.tight_layout()
-    plt.show()  
+    plt.show()
+
