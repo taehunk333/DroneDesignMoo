@@ -128,9 +128,9 @@ plt.show()
 
 # ---------------- Final Decision Variable Plot ----------------
 variable_names = [
-    "Number of Motors (idx)", "KV Motor", "Motor Current Max (A)", "Motor Mass (kg)",
+    "Number of Motors", "KV Motor", "Motor Current Max (A)", "Motor Mass (kg)",
     "Prop Diameter (m)", "Prop Pitch (inch)", "Battery Capacity (mAh)",
-    "Battery Voltage (idx)", "C-rating (idx)", "Frame Mass (kg)", "Prop Pitch (cm)"
+    "Battery Voltage (V)", "C-rating", "Frame Mass (kg)", "Prop Pitch (cm)"
 ]
 
 # Get final population and their decoded variables
@@ -177,27 +177,50 @@ else:
     fig, axes = plt.subplots(n_var, 1, figsize=(15, n_var * 0.9), sharex=False)
 
     for i, ax in enumerate(axes):
-        ax.hlines(0, xl[i], xu[i], color='gray', linewidth=5, alpha=0.3)
-        ax.set_xlim(xl[i], xu[i])
-        ax.set_yticks([])
-        ax.set_ylabel(variable_names[i], rotation=15, labelpad=60, fontsize=9, va='center')
-
         if i == 0:
-            ticks = np.arange(len(nmotors_set))
-            ax.plot(ticks, np.zeros_like(ticks), 'kx', markersize=8)
+            # Number of Motors: plot actual discrete values on x-axis
+            ticks = nmotors_set
+            ax.set_xticks(ticks)
+            ax.set_xlim(min(ticks) - 1, max(ticks) + 1)
+            ax.hlines(0, min(ticks) - 1, max(ticks) + 1, color='gray', linewidth=5, alpha=0.3)
+            for j in range(N):
+                nmotors_idx = int(np.clip(np.round(X_best[j, i]), 0, len(nmotors_set)-1))
+                x_val = nmotors_set[nmotors_idx]
+                ax.plot(x_val, 0, 'o', color=colors[j], markersize=6,
+                        label=f'Solution {j+1}' if i == 0 else "")
         elif i == 7:
-            ticks = np.arange(len(Vbattery_set))
-            ax.plot(ticks, np.zeros_like(ticks), 'kx', markersize=8)
+            # Battery Voltage: plot actual discrete values
+            ticks = Vbattery_set
+            ax.set_xticks(ticks)
+            ax.set_xlim(min(ticks) - 1, max(ticks) + 1)
+            ax.hlines(0, min(ticks) - 1, max(ticks) + 1, color='gray', linewidth=5, alpha=0.3)
+            for j in range(N):
+                Vbattery_idx = int(np.clip(np.round(X_best[j, i]), 0, len(Vbattery_set)-1))
+                x_val = Vbattery_set[Vbattery_idx]
+                ax.plot(x_val, 0, 'o', color=colors[j], markersize=6,
+                        label=f'Solution {j+1}' if i == 7 else "")
         elif i == 8:
-            ticks = np.arange(len(Crating_set))
-            ax.plot(ticks, np.zeros_like(ticks), 'kx', markersize=8)
+            # C-rating: plot actual discrete values
+            ticks = Crating_set
+            ax.set_xticks(ticks)
+            ax.set_xlim(min(ticks) - 5, max(ticks) + 5)
+            ax.hlines(0, min(ticks) - 5, max(ticks) + 5, color='gray', linewidth=5, alpha=0.3)
+            for j in range(N):
+                Crating_idx = int(np.clip(np.round(X_best[j, i]), 0, len(Crating_set)-1))
+                x_val = Crating_set[Crating_idx]
+                ax.plot(x_val, 0, 'o', color=colors[j], markersize=6,
+                        label=f'Solution {j+1}' if i == 8 else "")
+        else:
+            ax.hlines(0, xl[i], xu[i], color='gray', linewidth=5, alpha=0.3)
+            ax.set_xlim(xl[i], xu[i])
+            for j in range(N):
+                x_val = X_best[j, i]
+                x_val_clipped = np.clip(x_val, xl[i], xu[i])
+                ax.plot(x_val_clipped, 0, 'o', color=colors[j], markersize=6,
+                        label=f'Solution {j+1}' if i == 0 else "")
 
-        for j in range(N):
-            x_val = X_best[j, i]
-            x_val_clipped = np.clip(x_val, xl[i], xu[i])
-            ax.plot(x_val_clipped, 0, 'o', color=colors[j], markersize=6,
-                    label=f'Solution {j+1}' if i == 0 else "")
-
+        ax.set_ylabel(variable_names[i], rotation=15, labelpad=60, fontsize=9, va='center')
+        ax.set_yticks([])
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         ax.spines['left'].set_visible(False)
@@ -216,7 +239,7 @@ else:
     df = DataFrame(data, columns=df_columns)
 
     plt.figure(figsize=(18, 8))
-    parallel_coordinates(df, class_column=df_columns[-1], colormap=plt.get_cmap("viridis"))
+    parallel_coordinates(df, class_column=None, colormap=plt.get_cmap("viridis"))
     plt.title("Parallel Coordinates Plot - Decision Variables and Objectives")
     plt.grid(True, alpha=0.3)
     plt.show()
