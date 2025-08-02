@@ -9,5 +9,6 @@ dependencies:
   - matplotlib
   - pandas
   - jupyter
-  - pymoo
   - pip
+  - pip:
+      - pymoo
