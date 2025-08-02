@@ -24,13 +24,12 @@ nmotors_set = [4, 6, 8]
 Vbattery_set = [11.1, 14.8, 22.2]
 Crating_set = [25, 50, 75, 100]
 
-# Variable bounds (n_var = 10)
-xl = np.array([0, 500, 10, 0.05, 0.15, 3, 1000, 0, 0, 0.3])
-xu = np.array([2, 2200, 60, 0.3, 0.5, 6, 20000, 2, 3, 2.5])
-
+# Variable bounds
 n_var = 10
 n_obj = 3
 n_constr = 6
+xl = np.array([0, 500, 10, 0.05, 0.15, 3, 1000, 0, 0, 0.3])
+xu = np.array([2, 2200, 60, 0.3, 0.5, 6, 20000, 2, 3, 2.5])
 
 # Optimization settings
 n_gen = 10
@@ -41,51 +40,38 @@ class DroneOptimizationProblem(Problem):
         super().__init__(n_var=n_var, n_obj=n_obj, n_constr=n_constr, xl=xl, xu=xu)
 
     def _evaluate(self, X, out, *args, **kwargs):
-        # Manually Round Discrete Variables
         nmotors_idx = np.clip(np.round(X[:, 0]).astype(int), 0, len(nmotors_set)-1)
         Vbattery_idx = np.clip(np.round(X[:, 7]).astype(int), 0, len(Vbattery_set)-1)
         Crating_idx = np.clip(np.round(X[:, 8]).astype(int), 0, len(Crating_set)-1)
 
-        # Decode Variables
         nmotors = np.array([nmotors_set[i] for i in nmotors_idx])
         KV_motor = X[:, 1]
         Imotor_max = X[:, 2]
         mmotor = X[:, 3]
         Dprop = X[:, 4]
-        Pprop = X[:, 5]  # Correct index here
+        Pprop = X[:, 5]
         Cbattery = X[:, 6]
         Vbattery = np.array([Vbattery_set[i] for i in Vbattery_idx])
         Crating = np.array([Crating_set[i] for i in Crating_idx])
         mframe = X[:, 9]
 
-        # Derived Quantities
         mbattery = (Cbattery * Vbattery) / (Edensity * 1000)
         mtotal = mpayload + mframe + mbattery + nmotors * mmotor
         Aprop = (np.pi * Dprop**2) / 4
 
-        # Motor Maximum Thrust
         Tmotor_max = kT * Dprop**3 * Pprop * KV_motor * Vbattery
-
-        # Hover Power
         Phover = (mtotal * g)**1.5 / np.sqrt(2 * rho * nmotors * Aprop)
-
-        # Flight Time (hours)
         tflight = (Cbattery * Vbattery * eta_motor * eta_ESC) / (1000 * Phover)
 
-        # Thrust-to-Weight Ratio
         T_W = (nmotors * Tmotor_max) / (mtotal * g)
-
-        # Battery Current Draw
         Idraw = (nmotors * Tmotor_max) / (eta_motor * Vbattery)
         Idraw_per_motor = Tmotor_max / (eta_motor * Vbattery)
 
-        # Objectives
         F1 = -T_W
         F2 = -tflight
         F3 = mtotal
         F = np.column_stack([F1, F2, F3])
 
-        # Constraints
         g1 = 2 * mtotal * g - (nmotors * Tmotor_max)
         g2 = trequired - tflight
         g3 = Idraw - (Crating * Cbattery / 1000)
@@ -120,7 +106,6 @@ X = res.X
 F = res.F
 G = res.G
 
-# Decode discrete variables for plotting
 nmotors_idx = np.clip(np.round(X[:, 0]).astype(int), 0, len(nmotors_set)-1)
 Vbattery_idx = np.clip(np.round(X[:, 7]).astype(int), 0, len(Vbattery_set)-1)
 Crating_idx = np.clip(np.round(X[:, 8]).astype(int), 0, len(Crating_set)-1)
@@ -129,7 +114,6 @@ X[:, 0] = [nmotors_set[i] for i in nmotors_idx]
 X[:, 7] = [Vbattery_set[i] for i in Vbattery_idx]
 X[:, 8] = [Crating_set[i] for i in Crating_idx]
 
-# Filter feasible solutions
 feasible_indices = np.where(np.all(G <= 0, axis=1))[0]
 X_feasible = X[feasible_indices]
 F_feasible = F[feasible_indices]
@@ -204,14 +188,39 @@ else:
 
     # ---- Parallel Coordinates Plot ----
     df_columns = variable_names + ["-T/W", "-FlightTime", "TotalMass"]
-    data = np.hstack((X_best, F_best))
+    data = np.hstack((X, F))
     df = DataFrame(data, columns=df_columns)
-    df["Solution"] = [f"Solution {i+1}" for i in range(N)]
+
+    # Normalize Data per column (min-max normalization)
+    df_norm = df.copy()
+    for col in df_columns:
+        col_min = df_norm[col].min()
+        col_max = df_norm[col].max()
+        if col_max - col_min != 0:
+            df_norm[col] = (df_norm[col] - col_min) / (col_max - col_min)
+        else:
+            df_norm[col] = 0.5  # Handle constant columns
+
+    df_norm["Solution"] = "Other"
+    for i in range(N):
+        idx = feasible_indices[i]
+        df_norm.at[idx, "Solution"] = f"Solution {i+1}"
 
     plt.figure(figsize=(18, 8))
-    parallel_coordinates(df, class_column="Solution", colormap=plt.get_cmap("tab10"))
-    plt.title("Parallel Coordinates Plot - Decision Variables and Objectives")
+
+    # Plot all solutions in light gray first
+    parallel_coordinates(df_norm, class_column="Solution", color=['darkgray']*len(df_norm['Solution'].unique()), alpha=0.2, linewidth=0.7)
+
+    # Overlay the top 5 solutions with distinct colors
+    colors = plt.cm.tab10.colors[:N]
+    for i in range(N):
+        sol_label = f"Solution {i+1}"
+        parallel_coordinates(df_norm[df_norm['Solution'] == sol_label], class_column="Solution",
+                            color=[colors[i]], alpha=0.9, linewidth=2)
+
+    plt.ylabel("Normalized Values (min-max scaled)", fontsize=12)
+    plt.title("Parallel Coordinates Plot - All Solutions with Top 5 Highlighted")
     plt.grid(True, alpha=0.3)
-    plt.xticks(rotation=90)  
-    plt.tight_layout()       
-    plt.show()
+    plt.xticks(rotation=90)
+    plt.tight_layout()
+    plt.show()  
