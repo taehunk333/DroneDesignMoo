@@ -1,0 +1,13 @@
+name: drone_moo_312
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.12
+  - numpy
+  - scipy
+  - matplotlib
+  - pandas
+  - jupyter
+  - pymoo
+  - pip
