@@ -4,28 +4,29 @@ from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.core.problem import Problem
 from pymoo.core.termination import NoTermination
 
-# Fixed Parameters
+# ---------------- Fixed Parameters ----------------
 mpayload = 1.5  # kg
 rho = 1.225  # kg/m^3
 g = 9.81  # m/s^2
 Edensity = 200  # Wh/kg
 eta_motor = 0.85
 eta_ESC = 0.95
-kT = 1  # empirical coefficient (tune this)
+kT = 1e-3  # empirical coefficient (adjust as needed)
 trequired = 15 / 60  # in hours
 VESC_max = 25  # V
 Dframe_max = 0.6  # m
 
-# Decision Variable Sets
+# Discrete Sets
 nmotors_set = [4, 6, 8]
 Vbattery_set = [11.1, 14.8, 22.2]
 Crating_set = [25, 50, 75, 100]
 
+# ---------------- Variable Encoding ----------------
 n_var = 11
 n_obj = 3
 n_constr = 6
 
-# Variable Bounds
+# Treat discrete variables as continuous indices
 xl = np.array([0, 500, 10, 0.05, 0.15, 3, 1000, 0, 0, 0.3, 3])
 xu = np.array([2, 2200, 60, 0.3, 0.5, 6, 20000, 2, 3, 2.5, 6])
 
@@ -41,26 +42,31 @@ algorithm.setup(problem, termination=termination)
 
 np.random.seed(1)
 
-# Real-time Plot Setup
+# ---------------- Real-Time Plot Setup ----------------
 plt.ion()
 fig = plt.figure(figsize=(10, 7))
 ax = fig.add_subplot(111, projection='3d')
 
-# Optimization Loop
+# ---------------- Optimization Loop ----------------
 for n_gen in range(10):
     pop = algorithm.ask()
     X = pop.get("X")
 
+    # Manually Round Discrete Variables
+    nmotors_idx = np.clip(np.round(X[:, 0]).astype(int), 0, len(nmotors_set)-1)
+    Vbattery_idx = np.clip(np.round(X[:, 7]).astype(int), 0, len(Vbattery_set)-1)
+    Crating_idx = np.clip(np.round(X[:, 8]).astype(int), 0, len(Crating_set)-1)
+
     # Decode Variables
-    nmotors = np.array([nmotors_set[int(round(x))] for x in X[:, 0]])
+    nmotors = np.array([nmotors_set[i] for i in nmotors_idx])
     KV_motor = X[:, 1]
     Imotor_max = X[:, 2]
     mmotor = X[:, 3]
     Dprop = X[:, 4]
     Pprop = X[:, 10]
     Cbattery = X[:, 6]
-    Vbattery = np.array([Vbattery_set[int(round(x))] for x in X[:, 7]])
-    Crating = np.array([Crating_set[int(round(x))] for x in X[:, 8]])
+    Vbattery = np.array([Vbattery_set[i] for i in Vbattery_idx])
+    Crating = np.array([Crating_set[i] for i in Crating_idx])
     mframe = X[:, 9]
 
     # Derived Quantities
@@ -119,7 +125,7 @@ for n_gen in range(10):
 plt.ioff()
 plt.show()
 
-# Final Results
+# ---------------- Final Results ----------------
 res = algorithm.pop
 F = res.get("F")
 print("hash", F.sum())
