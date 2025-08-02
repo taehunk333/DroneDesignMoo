@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "DroneDesignMoo"
+version = "0.1.0"
+description = "Multi-objective optimization tools for drone design"
+authors = [
+    { name="Taehun Kim", email="tk6at@virginia.edu" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "pandas",
+    "pymoo"
+]

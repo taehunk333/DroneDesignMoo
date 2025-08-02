@@ -2,7 +2,7 @@
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.termination import get_termination
 from pymoo.optimize import minimize
-from problem import DroneOptimizationProblem
+from DroneDesignMoo.problem import DroneOptimizationProblem
 
 def run_optimization(n_gen=10, pop_size=100, seed=1):
     problem = DroneOptimizationProblem()

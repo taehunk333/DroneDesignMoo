@@ -1,7 +1,7 @@
 # main.py
-from optimizer import run_optimization
-from postprocess import plot_pareto_front, plot_decision_variables, plot_parallel_coordinates, decode_discrete_vars
-from constants import *
+from DroneDesignMoo.optimizer import run_optimization
+from DroneDesignMoo.postprocess import plot_pareto_front, plot_decision_variables, plot_parallel_coordinates, decode_discrete_vars
+from DroneDesignMoo.constants import *
 import numpy as np
 
 def main():

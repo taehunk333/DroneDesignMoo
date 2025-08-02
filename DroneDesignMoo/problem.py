@@ -1,7 +1,7 @@
 # problem.py
 import numpy as np
 from pymoo.core.problem import Problem
-from constants import *
+from DroneDesignMoo.constants import *
 
 class DroneOptimizationProblem(Problem):
     def __init__(self):

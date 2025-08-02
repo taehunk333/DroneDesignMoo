@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pandas import DataFrame
 from pandas.plotting import parallel_coordinates
-from constants import *
+from DroneDesignMoo.constants import *
 import matplotlib
 
 def decode_discrete_vars(X):
