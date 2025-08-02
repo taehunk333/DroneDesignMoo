@@ -174,13 +174,13 @@ else:
     plt.show()
 
     # ---- Compact stacked subplots for decision variables (only 5 colored solutions) ----
-    fig, axes = plt.subplots(n_var, 1, figsize=(10, n_var * 0.9), sharex=False)
+    fig, axes = plt.subplots(n_var, 1, figsize=(15, n_var * 0.9), sharex=False)
 
     for i, ax in enumerate(axes):
         ax.hlines(0, xl[i], xu[i], color='gray', linewidth=5, alpha=0.3)
         ax.set_xlim(xl[i], xu[i])
         ax.set_yticks([])
-        ax.set_ylabel(variable_names[i], rotation=0, labelpad=30, fontsize=9, va='center')
+        ax.set_ylabel(variable_names[i], rotation=15, labelpad=60, fontsize=9, va='center')
 
         if i == 0:
             ticks = np.arange(len(nmotors_set))
