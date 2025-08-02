@@ -2,10 +2,10 @@
 import numpy as np
 
 # Fixed Parameters
-MPAYLOAD = 1.5  # kg
-RHO = 1.225  # kg/m^3
-GRAVITY = 9.81  # m/s^2
-EDENSITY = 200  # Wh/kg
+MASS_PAYLOAD = 1.5  # kg
+AIR_DENSITY = 1.225  # kg/m^3
+GRAV_CONSTANT = 9.81  # m/s^2
+ENERGY_DENSITY = 200  # Wh/kg
 ETA_MOTOR = 0.85
 ETA_ESC = 0.95
 KT = 0.5e-3  # empirical coefficient
