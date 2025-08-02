@@ -27,4 +27,4 @@ jobs:
       
       - name: Run unittests
         run: |
-          python -m unittest discover -s tests -p
+          python -m unittest discover -s tests -p "test_*.py" -v
