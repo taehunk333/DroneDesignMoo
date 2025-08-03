@@ -2,6 +2,7 @@
 from DroneDesignMoo.optimizer import run_optimization
 from DroneDesignMoo.postprocess import plot_pareto_front, plot_decision_variables, plot_parallel_coordinates, decode_discrete_vars
 from DroneDesignMoo.constants import *
+from DroneDesignMoo.settings import *
 import numpy as np
 
 def main():
@@ -11,7 +12,12 @@ def main():
         "Battery Voltage (V)", "C-rating", "Frame Mass (kg)"
     ]
 
-    res = run_optimization(n_gen=10, pop_size=100, seed=1)
+    res = run_optimization(
+        n_gen=n_gen,
+        pop_size=pop_size,
+        seed=seed
+    )
+
     X = res.X
     F = res.F
     G = res.G
@@ -21,7 +27,6 @@ def main():
 
     if len(feasible_indices) == 0:
         print("No feasible solutions found.")
-        return
 
     max_solutions = 5
     X_feasible = X_decoded[feasible_indices]
@@ -31,9 +36,27 @@ def main():
     X_best = X_feasible[:N]
     F_best = F_feasible[:N]
 
-    plot_pareto_front(F, feasible_indices, max_solutions)
-    plot_decision_variables(X_best, variable_names, max_solutions)
-    plot_parallel_coordinates(X, F, G, variable_names, max_solutions)
+    plot_pareto_front(
+        F,
+        feasible_indices,
+        max_solutions
+    )
+
+    plot_decision_variables(
+        X_all=X_decoded,
+        X_feasible=X_feasible,
+        F_feasible=F_feasible,
+        variable_names=variable_names,
+        max_solutions=5
+    )
+
+    plot_parallel_coordinates(
+        X,
+        F,
+        G,
+        variable_names,
+        max_solutions
+    )
 
 if __name__ == "__main__":
     main()
